@@ -62,7 +62,7 @@ class GalleryPickerController {
           final fileModel = FileModel(
             file: assetFile,
             path: assetFile.path,
-            extention: file.mimeType!.split('/')[1],
+            extention: file.mimeType?.split('/')[1] ?? '',
             type: file.type,
             duration: file.videoDuration,
             size: size,

@@ -29,7 +29,6 @@ class BottomSheetPicker extends StatefulWidget {
     required this.body,
     required this.bottomNavigation,
     required this.sheetBody,
-    required this.sheetHeader,
     required this.onSheetMoved,
     required this.onSnapCompleted,
     this.title,
@@ -42,7 +41,6 @@ class BottomSheetPicker extends StatefulWidget {
   final Widget body;
   final Function(double data) onSnapCompleted;
   final Function(double data) onSheetMoved;
-  final Widget Function(Animation<double> anim) sheetHeader;
   final Widget sheetBody;
   final double grabbingHeight;
   final BoxDecoration? barDecoration;
@@ -71,16 +69,19 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
     controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
+      reverseDuration: const Duration(milliseconds: 200),
     )..addListener(() {
         setState(() {});
       });
     headerAnim = CurvedAnimation(
       parent: controller,
       curve: const Interval(0.0, .6),
+      reverseCurve: const Interval(0.2, 1.0),
     );
     barAnim = CurvedAnimation(
       parent: controller,
       curve: const Interval(0.5, 1.0),
+      reverseCurve: const Interval(0.0, 0.5),
     );
     sheetController = SnappingSheetController();
 
@@ -99,9 +100,10 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
     super.dispose();
   }
 
-  void onSheetMoved(double data) {
+  void onSheetMoved(double data) async {
     if (isSheetFullScreen) {
-      if (data >= 0.87 && data <= 0.93) {
+      if (data >= 0.85 && data <= 0.93) {
+        print(sheetOldData);
         if (data >= sheetOldData) {
           //up
           controller.forward();
@@ -109,8 +111,8 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
           // down
           controller.reverse();
         }
+        sheetOldData = data;
       }
-      sheetOldData = data;
     }
   }
 
@@ -122,10 +124,12 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: Stack(
-      children: [buildSnapSheet, buildAppBar],
-    ));
+    return Stack(
+      children: [
+        buildSnapSheet,
+        buildAppBar,
+      ],
+    );
   }
 
   Widget get buildAppBar {
@@ -171,6 +175,7 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
         widget.onSheetMoved.call(data.relativeToSheetHeight);
         if (data.relativeToSheetHeight < 0.4) {
           isBottomSheetShow = false;
+          isSheetFullScreen = true;
         } else {
           isBottomSheetShow = true;
         }
@@ -188,13 +193,36 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
       grabbing: AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
-          return Transform(
-            alignment: Alignment.bottomCenter,
-            transform: Matrix4.identity()..scale(1.0 + 2.0 * headerAnim.value),
-            child: child,
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              Transform(
+                alignment: Alignment.bottomCenter,
+                transform: Matrix4.identity()
+                  ..scale(1.0 + 2.0 * headerAnim.value),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20.0),
+                    ),
+                  ),
+                ),
+              ),
+              Opacity(
+                opacity: 1-headerAnim.value,
+                child: Container(
+                  width: 100.0,
+                  height: 4.0,
+                  decoration: BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                ),
+              ),
+            ],
           );
         },
-        child: widget.sheetHeader.call(headerAnim),
       ),
       lockOverflowDrag: true,
       sheetBelow: SnappingSheetContent(

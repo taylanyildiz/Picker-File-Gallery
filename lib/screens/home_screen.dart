@@ -26,7 +26,6 @@ class HomeScreen extends GetView<HomeScreenController> {
         controller: controller.sheetController,
         body: body,
         sheetBody: sheetBody,
-        sheetHeader: buildHeader,
         bottomNavigation: buildBottomNavigation,
         onSheetMoved: (data) {},
         onSnapCompleted: controller.onSnapCompleted,
@@ -48,29 +47,6 @@ class HomeScreen extends GetView<HomeScreenController> {
     );
   }
 
-  Widget buildHeader(Animation<double> anim) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.orange,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(10.0),
-        ),
-      ),
-      child: Opacity(
-        opacity: 1 - anim.value,
-        child: Center(
-          child: Container(
-            width: 60.0,
-            height: 4.0,
-            decoration: BoxDecoration(
-              color: Colors.black38,
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget get sheetBody {
     return Container(

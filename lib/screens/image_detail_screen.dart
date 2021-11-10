@@ -28,9 +28,8 @@ class ImageDetailScreen extends GetView<ImageDetailScreenController> {
     return Crop.file(
       controller.file!,
       key: controller.cropKey,
-      alwaysShowGrid: true,
-      scale: 1.0001,
-      aspectRatio: .55,
+      alwaysShowGrid: false,
+      scale: 1.001,
     );
   }
 

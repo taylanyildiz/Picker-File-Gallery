@@ -53,15 +53,10 @@ class ImageDetailScreenController extends GetxController {
     Get.back();
   }
 
-  double get scale {
+  double? get aspectRatio {
     double scale = 1.0;
-    if (fileModel == null) {
-      return scale;
-    }
+    if (fileModel == null) return null;
     scale = fileModel!.size!.aspectRatio;
-    if (scale < 1.0) {
-      scale = 1 + (1 - scale);
-    }
     return scale;
   }
 
