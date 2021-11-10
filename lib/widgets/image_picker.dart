@@ -1,3 +1,4 @@
+import 'package:bottom_sheet_picker/utils/utils.dart';
 import 'package:camera/camera.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 class ImagePicker extends StatefulWidget {
   const ImagePicker({
     Key? key,
+    required this.pickerController,
     required this.cameraController,
     required this.scrollController,
     required this.cameraScale,
@@ -20,6 +22,7 @@ class ImagePicker extends StatefulWidget {
     this.isCameraDispose = false,
   }) : super(key: key);
 
+  final ImagePickerController pickerController;
   final CameraController? cameraController;
   final ScrollController scrollController;
   final List<FileModel> files;
@@ -45,6 +48,29 @@ class _ImagePickerState extends State<ImagePicker>
   List<FileModel> fileList = [];
   int selectedCount = 0;
 
+  @override
+  void initState() {
+    controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    )..addListener(() {
+        setState(() {});
+      });
+
+    widget.pickerController._addListener(clear: () {
+      selectedCount = 0;
+      fileList = [];
+      selectedIndexFile = -1;
+      multiSelection = false;
+      widget.pickFiles.call([]);
+      for (var element in widget.files) {
+        element.isSelected = false;
+      }
+      controller.reset();
+    });
+    super.initState();
+  }
+
   void removedFile(int index) {
     int removeIndex =
         fileList.indexWhere((e) => e.path == widget.files[index].path);
@@ -53,17 +79,11 @@ class _ImagePickerState extends State<ImagePicker>
     }
   }
 
-  void onTap(index) {
-    if (multiSelection) {
-      multiSelectFile(index);
-    }
-  }
-
   void onLongPress(index) {
     if (selectedCount == 0) {
       multiSelection = true;
       setState(() {});
-      onTap(index);
+      multiSelectFile(index);
     }
   }
 
@@ -86,21 +106,11 @@ class _ImagePickerState extends State<ImagePicker>
         selectedIndexFile = index;
       } else {
         selectedIndexFile = -1;
+        Utils.showSnackBar('Error', 'Only 4 files selection enable.');
       }
     }
 
     widget.pickFiles.call(fileList);
-  }
-
-  @override
-  void initState() {
-    controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    )..addListener(() {
-        setState(() {});
-      });
-    super.initState();
   }
 
   @override
@@ -126,7 +136,7 @@ class _ImagePickerState extends State<ImagePicker>
           return Hero(
             tag: '$index-camera',
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10.0),
+              // borderRadius: BorderRadius.circular(10.0),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -191,6 +201,7 @@ class _ImagePickerState extends State<ImagePicker>
           Image.file(
             widget.files[index].file!,
             width: double.infinity,
+            height: double.infinity,
             fit: BoxFit.cover,
           ),
           selectedCount != 0 ? buildSelectionBox(index) : const SizedBox(),
@@ -203,22 +214,19 @@ class _ImagePickerState extends State<ImagePicker>
     return Positioned(
       top: 5.0,
       right: 5.0,
-      child: GestureDetector(
-        onTap: () => onTap(index),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 20.0,
-              height: 20.0,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey, width: 1.0),
-              ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 20.0,
+            height: 20.0,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey, width: 1.0),
             ),
-            buildMultiSelectedBox(index),
-          ],
-        ),
+          ),
+          buildMultiSelectedBox(index),
+        ],
       ),
     );
   }
@@ -231,11 +239,6 @@ class _ImagePickerState extends State<ImagePicker>
           alignment: Alignment.center,
           transform: Matrix4.identity()
             ..scale(
-              selectedIndexFile == index
-                  ? controller.value
-                  : widget.files[index].isSelected
-                      ? 1.0
-                      : 0.0,
               selectedIndexFile == index
                   ? controller.value
                   : widget.files[index].isSelected
@@ -260,4 +263,14 @@ class _ImagePickerState extends State<ImagePicker>
       ),
     );
   }
+}
+
+class ImagePickerController {
+  late Function() _clear;
+
+  void _addListener({required Function() clear}) {
+    _clear = clear;
+  }
+
+  void clear() => _clear();
 }

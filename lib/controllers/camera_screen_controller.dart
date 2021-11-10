@@ -1,5 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:bottom_sheet_picker/controllers/controllers.dart';
+import 'package:bottom_sheet_picker/models/file_model.dart';
+import 'package:photo_manager/photo_manager.dart';
+
 import '/routers/app_routers.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +17,8 @@ class CameraScreenController extends GetxController {
   /// Video timer.
   Timer? timer;
 
+  final homeController = Get.find<HomeScreenController>();
+
   @override
   void onInit() {
     cameraController = Get.arguments['camera'];
@@ -23,13 +29,21 @@ class CameraScreenController extends GetxController {
     super.onInit();
   }
 
+  @override
+  void onClose() {
+    initializedCamera(lens: 0);
+    super.onClose();
+  }
+
   Future<bool> onWillPop() async {
     await setNormalScreen();
+    initializedCamera(lens: 0);
     Get.back();
     return true;
   }
 
   void onBack() async {
+    initializedCamera(lens: 0);
     await setNormalScreen();
     Get.back();
   }
@@ -38,6 +52,8 @@ class CameraScreenController extends GetxController {
     cameraController = CameraController(cameras![lens], ResolutionPreset.max)
       ..initialize().then((value) {
         update();
+        homeController.cameraController = cameraController;
+        homeController.update();
         return;
       });
   }
@@ -52,10 +68,23 @@ class CameraScreenController extends GetxController {
 
   Future<void> takePicture() async {
     File file = File((await cameraController!.takePicture()).path);
-    Get.toNamed(AppRoutes.imageDetail, arguments: {
-      'file': file,
-      'isCamera': true,
-    });
+    AssetEntity? imageEntity = await PhotoManager.editor.saveImageWithPath(
+      file.path,
+    );
+    if (imageEntity != null) {
+      final fileModel = FileModel(
+        id: imageEntity.id,
+        file: await imageEntity.originFile,
+        path: imageEntity.relativePath,
+        extention: imageEntity.mimeType!.split('/')[1],
+        type: AssetType.image,
+        duration: imageEntity.videoDuration,
+      );
+      Get.toNamed(AppRoutes.imageDetail, arguments: {
+        'file_model': fileModel,
+        'isCamera': true,
+      });
+    }
   }
 
   Future<void> recordVideo() async {

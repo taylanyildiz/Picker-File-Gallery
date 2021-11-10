@@ -102,7 +102,7 @@ class _GalleryPickerState extends State<GalleryPicker>
         child: GridView.builder(
           shrinkWrap: true,
           controller: widget.scrollController,
-          padding: const EdgeInsets.all(5.0),
+          padding: const EdgeInsets.fromLTRB(5.0, 0.0, 5.0, 10.0),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 5.0,
@@ -128,11 +128,11 @@ class _GalleryPickerState extends State<GalleryPicker>
         onLongPress(index);
       },
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(5.0),
+        // borderRadius: BorderRadius.circular(5.0),
         child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5.0),
-          ),
+          decoration: const BoxDecoration(
+              // borderRadius: BorderRadius.circular(5.0),
+              ),
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -153,11 +153,6 @@ class _GalleryPickerState extends State<GalleryPicker>
           alignment: Alignment.center,
           transform: Matrix4.identity()
             ..scale(
-              selectedIndexFile == index
-                  ? .9
-                  : widget.files[index].isSelected
-                      ? .9
-                      : 1.0,
               selectedIndexFile == index
                   ? .9
                   : widget.files[index].isSelected

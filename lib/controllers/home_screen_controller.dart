@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
+import 'package:bottom_sheet_picker/enums/enums.dart';
+import 'package:bottom_sheet_picker/utils/utils_enum.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import '/controllers/controllers.dart';
@@ -27,17 +29,24 @@ class HomeScreenController extends GetxController {
 
   ScrollPhysics? gridViewPhysics = const NeverScrollableScrollPhysics();
 
+  /// Bottom sheet image picker controller.
   BottomSheetController sheetController = BottomSheetController();
 
+  /// Image picker controller for clean all
+  ImagePickerController pickerController = ImagePickerController();
+
+  /// Selected images
+  List selectedImages = <FileModel>[];
+
   @override
-  void onInit() async {
+  void onInit() {
     scrollController = ScrollController(initialScrollOffset: 0.0)
       ..addListener(_scrollListen);
     super.onInit();
   }
 
   @override
-  void dispose() {
+  void dispose() async {
     cameraController!.dispose();
     scrollController.dispose();
     super.dispose();
@@ -60,8 +69,13 @@ class HomeScreenController extends GetxController {
   }
 
   Future<void> getImageFiles() async {
-    imageFiles = await GalleryPickerController.getImageFiles(imageFiles);
-    update();
+    final _ps = await PhotoManager.requestPermissionExtend();
+    if (_ps.isAuth) {
+      imageFiles = await GalleryPickerController.getImageFiles(imageFiles);
+      update();
+    } else {
+      await getImageFiles();
+    }
   }
 
   bool onNotification(scrollState) {
@@ -69,37 +83,80 @@ class HomeScreenController extends GetxController {
       if (scrollState.metrics.pixels == 0.0) {
         gridViewPhysics = const NeverScrollableScrollPhysics();
         update();
+      } else {
+        gridViewPhysics = const AlwaysScrollableScrollPhysics();
+        update();
       }
     }
     return true;
   }
 
-  void initializedCamera({int lens = 0}) {
-    cameraController = CameraController(cameras![lens], ResolutionPreset.max)
-      ..initialize().then((value) {
-        update();
-        return;
-      }).onError((error, stackTrace) {
-        log('CAMERA ERROR :\n' + error.toString());
-      });
+  Future<void> initializedCamera({int lens = 0}) async {
+    cameraController = CameraController(cameras![lens], ResolutionPreset.max);
+    await cameraController!.initialize();
+    update();
+  }
+
+  void onBottomNavigation(int index) {
+    EBottomNavigationType type = UtilsEnum.indexToBottomNavigationType(index);
+    switch (type) {
+      case EBottomNavigationType.gallery:
+        Get.toNamed(AppRoutes.galleryPicker);
+        break;
+      case EBottomNavigationType.files:
+        // TODO: Handle this case.
+        break;
+      case EBottomNavigationType.location:
+        // TODO: Handle this case.
+        break;
+      case EBottomNavigationType.constacts:
+        // TODO: Handle this case.
+        break;
+    }
+  }
+
+  void selectFiles() {
+    print(selectedImages.length);
   }
 
   void onSnapCompleted(double data) async {
     if (data <= 0.0) {
       isCameraDispose = true;
-      cameraController!.dispose();
+      if (cameraController != null && cameraController!.value.isInitialized) {
+        cameraController!.dispose();
+      }
       gridViewPhysics = const NeverScrollableScrollPhysics();
     } else if (data > 0.0 && data <= .52) {
       gridViewPhysics = const NeverScrollableScrollPhysics();
       if (isCameraDispose == true) {
         isCameraDispose = false;
-        initializedCamera();
+        scrollController.jumpTo(0.0);
+        await initializedCamera();
         await getImageFiles();
       }
     } else if (data < .93 && data > 0.5) {
       gridViewPhysics = const NeverScrollableScrollPhysics();
     } else if (data >= .93) {
       gridViewPhysics = const AlwaysScrollableScrollPhysics();
+    }
+    update();
+  }
+
+  void onDetail(FileModel fileModel) {
+    Get.toNamed(AppRoutes.imageDetail, arguments: {
+      'file_model': fileModel,
+      'file_models': List.generate(imageFiles.length, (index) {
+        return imageFiles[index];
+      })
+    });
+  }
+
+  void pickFile(List<FileModel> list) {
+    if (selectedImages.isEmpty) {
+      sheetController.displayFullScreen();
+    }
+    if (list.length != selectedImages.length) {
+      selectedImages = list;
     }
     update();
   }

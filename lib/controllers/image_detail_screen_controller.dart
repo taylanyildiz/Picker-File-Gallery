@@ -1,17 +1,23 @@
+import 'dart:developer';
 import 'dart:io';
+import 'package:bottom_sheet_picker/controllers/controllers.dart';
 import 'package:bottom_sheet_picker/models/file_model.dart';
+import 'package:photo_manager/photo_manager.dart';
+
+import '/enums/enums.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:image_crop/image_crop.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import '/main.dart';
 
 class ImageDetailScreenController extends GetxController {
-  /// Image file.
-  File? file;
+  /// All Image files
+  late List<FileModel> fileModels;
 
-  /// File model from gallery.
-  FileModel? fileModel;
+  /// Image detail file.
+  late FileModel fileModel;
+
+  late FileModel selectedFileModel;
 
   /// Initialized from camera.
   /// default [false]
@@ -20,18 +26,73 @@ class ImageDetailScreenController extends GetxController {
   // Crop key.
   final cropKey = GlobalKey<CropState>();
 
+  /// Page controller for gesture files.
+  late PageController imageFileController;
+
+  /// Bottom file list view controller.
+  late PageController imageThumController;
+
+  /// Image detail mode.
+  EImageDetailMode imageMode = EImageDetailMode.gesture;
+
+  /// Selected file index.
+  int selectIndex = 0;
+
   @override
   void onInit() async {
-    file = Get.arguments['file'];
-    fileModel = Get.arguments['file_model'];
-    isCamera = Get.arguments['isCamera'] ?? false;
-    file ??= fileModel!.file;
+    getArguments();
+    initializePageControllers();
     await setNormalScreen();
     super.onInit();
   }
 
+  void getArguments() {
+    isCamera = Get.arguments['isCamera'] ?? false;
+    fileModel = Get.arguments['file_model'];
+    fileModels = Get.arguments['file_models'] ?? [fileModel];
+    selectIndex = fileModels.indexWhere((e) => e.id == fileModel.id);
+    selectedFileModel = fileModel;
+  }
+
+  void initializePageControllers() {
+    imageThumController = PageController(
+      initialPage: selectIndex,
+      viewportFraction: .15,
+      keepPage: false,
+    );
+    imageFileController = PageController(initialPage: selectIndex)
+      ..addListener(_listenPageController);
+  }
+
+  void _listenPageController() async {
+    if (!isCamera) {
+      if (imageFileController.position.atEdge) {
+        if (imageFileController.position.pixels == 0) {
+          // top
+          log('start');
+        } else {
+          await getImageFiles();
+          log('end');
+        }
+      }
+    }
+  }
+
+  Future<void> getImageFiles() async {
+    final _ps = await PhotoManager.requestPermissionExtend();
+    if (_ps.isAuth) {
+      fileModels = await GalleryPickerController.getImageFiles(fileModels);
+      update();
+    } else {
+      await getImageFiles();
+    }
+  }
+
   void setCropEnable() {
-    update();
+    if (imageMode != EImageDetailMode.edit) {
+      imageMode = EImageDetailMode.edit;
+      update();
+    }
   }
 
   Future<void> setScreen() async {
@@ -48,17 +109,71 @@ class ImageDetailScreenController extends GetxController {
     return true;
   }
 
-  void onBack() async {
-    await setScreen();
-    Get.back();
+  void onPageChangeFile(int index) {
+    changePage(index);
+    imageThumController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.ease,
+    );
   }
 
-  double? get aspectRatio {
-    double scale = 1.0;
-    if (fileModel == null) return null;
-    scale = fileModel!.size!.aspectRatio;
-    return scale;
+  void onPageChangeThumb(int index) {
+    changePage(index);
+    imageFileController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.ease,
+    );
   }
 
-  Future<void> cropImage() async {}
+  void changePage(int page) {
+    selectIndex = page;
+    selectedFileModel = fileModels[page];
+  }
+
+  void selectImage(int index) {
+    selectedFileModel = fileModels[index];
+    imageFileController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.ease,
+    );
+    update();
+  }
+
+  void onCancelOrBack() async {
+    if (imageMode == EImageDetailMode.gesture) {
+      await setScreen();
+      Get.back();
+      return;
+    }
+    imageMode = EImageDetailMode.gesture;
+    changePage(selectIndex);
+    update();
+  }
+
+  Future<void> cropOrSelectImage() async {
+    if (imageMode == EImageDetailMode.edit) {
+      // TODO: Select image file
+      return;
+    }
+    await cropImage();
+  }
+
+  Future<void> cropImage() async {
+    final scale = cropKey.currentState!.scale;
+    final area = cropKey.currentState!.area;
+    if (area == null) return null;
+
+    final sample = await ImageCrop.sampleImage(
+      file: selectedFileModel.file!,
+      preferredSize: (2000 / scale).round(),
+    );
+
+    final cropFile = await ImageCrop.cropImage(
+      file: sample,
+      area: area,
+    );
+  }
 }

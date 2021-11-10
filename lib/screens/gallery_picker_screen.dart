@@ -17,13 +17,14 @@ class GalleryPickerScreen extends GetView<GalleryPickerScreenController> {
     return GetBuilder<GalleryPickerScreenController>(
         builder: (galleryPickerController) {
       return Scaffold(
+        backgroundColor: const Color(0xff0f171a),
         appBar: buildAppBar,
         body: Padding(
           padding: const EdgeInsets.only(top: 20.0),
           child: GalleryPicker(
             scrollController: controller.scrollController,
             pickFiles: (file) {},
-            onDetail: (file) {},
+            onDetail: controller.onDetail,
             files: controller.files,
             child: (context, index) {
               switch (galleryPickerController.files[index].type!) {
@@ -48,9 +49,9 @@ class GalleryPickerScreen extends GetView<GalleryPickerScreenController> {
   AppBar get buildAppBar {
     return AppBar(
       elevation: 0.0,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xff1e2b34),
       leading: IconButton(
-        color: Colors.black,
+        color: Colors.white,
         iconSize: 25.0,
         icon: const Icon(Icons.arrow_back_ios),
         onPressed: () => Get.back(),
@@ -58,7 +59,7 @@ class GalleryPickerScreen extends GetView<GalleryPickerScreenController> {
       title: const Text(
         'Select Photo',
         style: TextStyle(
-          color: Colors.black,
+          color: Colors.white,
         ),
       ),
     );
@@ -78,9 +79,7 @@ class _ImagePicker extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         Container(
-          decoration: BoxDecoration(
-            border: Border.all(width: 1.0, color: Colors.black),
-          ),
+          color: Colors.transparent,
           child: const Center(
             child: Icon(
               Icons.image,
@@ -91,6 +90,7 @@ class _ImagePicker extends StatelessWidget {
         Image.file(
           fileModel.file!,
           width: double.infinity,
+          height: double.infinity,
           fit: BoxFit.cover,
         ),
       ],

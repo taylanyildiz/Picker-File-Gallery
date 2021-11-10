@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:snapping_sheet/snapping_sheet.dart';
 
 /// Position of bottom sheet.
@@ -27,13 +28,13 @@ class BottomSheetPicker extends StatefulWidget {
     Key? key,
     required this.controller,
     required this.body,
-    required this.bottomNavigation,
     required this.sheetBody,
     required this.onSheetMoved,
     required this.onSnapCompleted,
+    required this.onBottomNavigation,
     this.title,
     this.leading,
-    this.barDecoration,
+    this.actions,
     this.grabbingHeight = 20.0,
   }) : super(key: key);
 
@@ -41,12 +42,12 @@ class BottomSheetPicker extends StatefulWidget {
   final Widget body;
   final Function(double data) onSnapCompleted;
   final Function(double data) onSheetMoved;
+  final Function(int index) onBottomNavigation;
   final Widget sheetBody;
   final double grabbingHeight;
-  final BoxDecoration? barDecoration;
   final Widget? title;
   final Widget? leading;
-  final Widget? bottomNavigation;
+  final List<Widget>? actions;
 
   @override
   State<BottomSheetPicker> createState() => _BottomSheetPickerState();
@@ -61,7 +62,6 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
 
   bool isSheetFullScreen = true;
   double sheetOldData = 0.0;
-
   bool isBottomSheetShow = true;
 
   @override
@@ -90,6 +90,7 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
         sheetController.snapToPosition(_half);
       },
       onBack,
+      _displayFullScreen,
     );
     super.initState();
   }
@@ -100,10 +101,14 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant BottomSheetPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+  }
+
   void onSheetMoved(double data) async {
     if (isSheetFullScreen) {
       if (data >= 0.85 && data <= 0.93) {
-        print(sheetOldData);
         if (data >= sheetOldData) {
           //up
           controller.forward();
@@ -122,6 +127,12 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
     sheetController.snapToPosition(_lower);
   }
 
+  void _displayFullScreen() {
+    if (!controller.isCompleted) {
+      sheetController.snapToPosition(_full);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -132,34 +143,44 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
     );
   }
 
+  void onNovigation(index) {
+    widget.onBottomNavigation.call(index);
+  }
+
   Widget get buildAppBar {
     return Positioned(
       top: 0.0,
       left: 0.0,
       right: 0.0,
-      child: Opacity(
-        opacity: barAnim.value,
-        child: SizedBox(
-          height: 60.0,
-          width: double.infinity,
-          child: Container(
-            decoration: widget.barDecoration ??
-                const BoxDecoration(
-                  color: Colors.orange,
-                ),
-            child: Row(
-              children: [
-                widget.leading ??
-                    IconButton(
-                      onPressed: onBack,
-                      icon: const Icon(
-                        Icons.arrow_back,
+      child: IgnorePointer(
+        ignoring: !controller.isCompleted,
+        child: Opacity(
+          opacity: barAnim.value.clamp(0.0, 1.0),
+          child: SizedBox(
+            height: 50.0,
+            width: double.infinity,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xff1e2b34),
+              ),
+              child: Row(
+                children: [
+                  widget.leading ??
+                      IconButton(
+                        onPressed: onBack,
+                        icon: const Icon(
+                          Icons.arrow_back,
+                        ),
+                        color: Colors.white,
                       ),
-                      color: Colors.black,
-                    ),
-                const SizedBox(width: 10.0),
-                widget.title ?? const SizedBox(width: 10.0),
-              ],
+                  const SizedBox(width: 10.0),
+                  widget.title ?? const SizedBox(width: 10.0),
+                  const Spacer(),
+                  Row(
+                    children: widget.actions ?? [],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -182,6 +203,10 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
         setState(() {});
       },
       onSnapCompleted: (data, position) {
+        if (data.relativeToSheetHeight < 0.8) {
+          controller.reset();
+          isSheetFullScreen = true;
+        }
         widget.onSnapCompleted.call(data.relativeToSheetHeight);
       },
       onSnapStart: (data, position) {},
@@ -199,10 +224,11 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
               Transform(
                 alignment: Alignment.bottomCenter,
                 transform: Matrix4.identity()
-                  ..scale(1.0 + 2.0 * headerAnim.value),
-                child: Container(
+                  ..scale(1.0 + 1.5 * headerAnim.value),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 100),
                   decoration: const BoxDecoration(
-                    color: Colors.orange,
+                    color: Color(0xff1e2b34),
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(20.0),
                     ),
@@ -210,12 +236,12 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
                 ),
               ),
               Opacity(
-                opacity: 1-headerAnim.value,
+                opacity: 1 - headerAnim.value,
                 child: Container(
                   width: 100.0,
                   height: 4.0,
                   decoration: BoxDecoration(
-                    color: Colors.black38,
+                    color: Colors.white24,
                     borderRadius: BorderRadius.circular(20.0),
                   ),
                 ),
@@ -233,7 +259,7 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
             ),
             Visibility(
               visible: isBottomSheetShow,
-              child: widget.bottomNavigation!,
+              child: buildBottomNavigation,
             )
           ],
         ),
@@ -242,16 +268,143 @@ class _BottomSheetPickerState extends State<BottomSheetPicker>
       snappingPositions: [_lower, _half, _full],
     );
   }
+
+  Widget get buildBottomNavigation {
+    return Container(
+      color: const Color(0xff1e2b34),
+      padding: const EdgeInsets.only(top: 5.0, bottom: 5.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Column(
+            children: [
+              GestureDetector(
+                onTap: () => onNovigation(0),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.blueAccent,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(10.0),
+                  child: const Icon(
+                    FontAwesomeIcons.image,
+                    size: 25.0,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 5.0),
+              const Text(
+                'Gallery',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 13.0,
+                ),
+              )
+            ],
+          ),
+          GestureDetector(
+            onTap: () => onNovigation(1),
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade300,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(10.0),
+                  child: const Icon(
+                    Icons.file_copy,
+                    size: 25.0,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 5.0),
+                const Text(
+                  'Files',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 13.0,
+                  ),
+                )
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => onNovigation(2),
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade500,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(10.0),
+                  child: const Icon(
+                    Icons.location_pin,
+                    size: 25.0,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 5.0),
+                const Text(
+                  'Location',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 13.0,
+                  ),
+                )
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => onNovigation(3),
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.yellow.shade600,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(10.0),
+                  child: const Icon(
+                    Icons.person,
+                    size: 25.0,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 5.0),
+                const Text(
+                  'Contacts',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 13.0,
+                  ),
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class BottomSheetController {
   late Function() _show;
   late Function() _close;
-  void _addListener(Function() _show, Function() _close) {
+  late Function() _displayFullScreen;
+  void _addListener(
+    Function() _show,
+    Function() _close,
+    Function() _displayFullScreen,
+  ) {
     this._show = _show;
     this._close = _close;
+    this._displayFullScreen = _displayFullScreen;
   }
 
   void close() => _close();
   void show() => _show();
+  void displayFullScreen() => _displayFullScreen();
 }

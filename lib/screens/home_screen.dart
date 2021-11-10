@@ -1,8 +1,6 @@
-import '/routers/app_routers.dart';
 import '/widgets/widgets.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '/widgets/bottom_sheet_picker.dart';
-import '../controllers/controllers.dart';
+import '/controllers/controllers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -26,34 +24,65 @@ class HomeScreen extends GetView<HomeScreenController> {
         controller: controller.sheetController,
         body: body,
         sheetBody: sheetBody,
-        bottomNavigation: buildBottomNavigation,
+        onBottomNavigation: controller.onBottomNavigation,
         onSheetMoved: (data) {},
         onSnapCompleted: controller.onSnapCompleted,
-        leading: IconButton(
-          onPressed: () {
-            controller.sheetController.close();
-          },
-          icon: const Icon(Icons.arrow_back),
-        ),
-        title: const Text(
-          'Gallery',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        leading: buildBarLeadingButton(),
+        title: buildBarTitle(),
+        actions: buildActions,
       ),
     );
   }
 
+  IconButton buildBarLeadingButton() {
+    return IconButton(
+      onPressed: () {
+        if (controller.selectedImages.isEmpty) {
+          controller.sheetController.close();
+        } else {
+          controller.pickerController.clear();
+        }
+      },
+      icon: Icon(
+        controller.selectedImages.isEmpty ? Icons.arrow_back : Icons.close,
+      ),
+      color: Colors.white,
+    );
+  }
+
+  Text buildBarTitle() {
+    return Text(
+      controller.selectedImages.isEmpty
+          ? 'Images'
+          : '${controller.selectedImages.length} Selected File',
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 20.0,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  List<Widget> get buildActions {
+    return [
+      Visibility(
+        visible: controller.selectedImages.isNotEmpty,
+        child: IconButton(
+          color: Colors.white,
+          onPressed: controller.selectFiles,
+          icon: const Icon(Icons.done),
+        ),
+      )
+    ];
+  }
 
   Widget get sheetBody {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.orange,
+        color: Color(0xff1e2b34),
       ),
       child: ImagePicker(
+        pickerController: controller.pickerController,
         isCameraDispose: controller.isCameraDispose,
         cameraController: controller.cameraController,
         cameraScale: controller.middleScreenCameraScale,
@@ -64,47 +93,26 @@ class HomeScreen extends GetView<HomeScreenController> {
         onCamera: () {
           controller.openCamera();
         },
-        onDetail: (file) {
-          Get.toNamed(AppRoutes.imageDetail, arguments: {
-            'file_model': file,
-          });
-        },
-        pickFiles: (files) {},
-      ),
-    );
-  }
-
-  Widget get buildBottomNavigation {
-    return Container(
-      height: 50.0,
-      color: Colors.red,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: const [
-          Icon(
-            FontAwesomeIcons.camera,
-            size: 25.0,
-          ),
-          Icon(
-            FontAwesomeIcons.images,
-            size: 25.0,
-          ),
-          Icon(
-            FontAwesomeIcons.file,
-            size: 25.0,
-          ),
-        ],
+        onDetail: controller.onDetail,
+        pickFiles: controller.pickFile,
       ),
     );
   }
 
   Widget get body {
     return Container(
-      color: Colors.transparent,
+      color: const Color(0xff0f171a),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           MaterialButton(
+            child: const Text(
+              'Show Bottom Sheet',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20.0,
+              ),
+            ),
             color: Colors.red,
             onPressed: () {
               // Get.toNamed(AppRoutes.galleryPicker);

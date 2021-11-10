@@ -4,6 +4,7 @@ import 'package:photo_manager/photo_manager.dart';
 
 class FileModel {
   FileModel({
+    required this.id,
     required this.file,
     required this.path,
     required this.extention,
@@ -12,7 +13,7 @@ class FileModel {
     this.isSelected = false,
     this.size,
   });
-
+  String id;
   String? path;
   File? file;
   String? extention;

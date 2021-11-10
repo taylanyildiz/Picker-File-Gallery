@@ -58,8 +58,10 @@ class GalleryPickerController {
       for (var file in entity) {
         final assetFile = await file.originFile;
         final size = file.size;
+        final id = file.id;
         if (assetFile != null) {
           final fileModel = FileModel(
+            id: id,
             file: assetFile,
             path: assetFile.path,
             extention: file.mimeType?.split('/')[1] ?? '',
