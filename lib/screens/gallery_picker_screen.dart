@@ -1,6 +1,7 @@
-import 'package:bottom_sheet_picker/controllers/gallery_picker_screen_controller.dart';
-import 'package:bottom_sheet_picker/models/file_model.dart';
-import 'package:bottom_sheet_picker/widgets/widgets.dart';
+import '/controllers/controllers.dart';
+import '../controllers/gallery_picker_screen_controller.dart';
+import '/models/file_model.dart';
+import '/widgets/widgets.dart';
 import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:video_player/video_player.dart';
@@ -13,35 +14,47 @@ class GalleryPickerScreen extends GetView<GalleryPickerScreenController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: buildAppBar,
-      body: Padding(
-        padding: const EdgeInsets.only(top: 20.0),
-        child: GalleryPicker(
-          pickMultiFile: (file) {},
-          pickSingleFile: (file) {},
-          files: controller.files,
-          child: (context, index) {
-            switch (controller.files[index].type!) {
-              case AssetType.image:
-                return _ImagePicker(fileModel: controller.files[index]);
-              case AssetType.video:
-                return _VideoPicker(fileModel: controller.files[index]);
-              case AssetType.audio:
-                return Container();
-              case AssetType.other:
-                return Container();
-            }
-          },
+    return GetBuilder<GalleryPickerScreenController>(
+        builder: (galleryPickerController) {
+      return Scaffold(
+        appBar: buildAppBar,
+        body: Padding(
+          padding: const EdgeInsets.only(top: 20.0),
+          child: GalleryPicker(
+            scrollController: controller.scrollController,
+            pickFiles: (file) {},
+            onDetail: (file) {},
+            files: controller.files,
+            child: (context, index) {
+              switch (galleryPickerController.files[index].type!) {
+                case AssetType.image:
+                  return _ImagePicker(
+                      fileModel: galleryPickerController.files[index]);
+                case AssetType.video:
+                  return _VideoPicker(
+                      fileModel: galleryPickerController.files[index]);
+                case AssetType.audio:
+                  return Container();
+                case AssetType.other:
+                  return Container();
+              }
+            },
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   AppBar get buildAppBar {
     return AppBar(
       elevation: 0.0,
       backgroundColor: Colors.white,
+      leading: IconButton(
+        color: Colors.black,
+        iconSize: 25.0,
+        icon: const Icon(Icons.arrow_back_ios),
+        onPressed: () => Get.back(),
+      ),
       title: const Text(
         'Select Photo',
         style: TextStyle(
@@ -61,10 +74,26 @@ class _ImagePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.file(
-      fileModel.file!,
-      width: double.infinity,
-      fit: BoxFit.cover,
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(width: 1.0, color: Colors.black),
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.image,
+              color: Colors.black,
+            ),
+          ),
+        ),
+        Image.file(
+          fileModel.file!,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        ),
+      ],
     );
   }
 }
@@ -112,8 +141,16 @@ class _VideoPickerState extends State<_VideoPicker> {
               ),
             ],
           )
-        : const Center(
-            child: CircularProgressIndicator(color: Colors.red),
+        : Container(
+            decoration: BoxDecoration(
+              border: Border.all(width: 1.0, color: Colors.black),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.image,
+                color: Colors.black,
+              ),
+            ),
           );
   }
 }

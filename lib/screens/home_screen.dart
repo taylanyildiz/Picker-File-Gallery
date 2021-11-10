@@ -1,9 +1,10 @@
-import 'package:bottom_sheet_picker/screens/send_image_screen.dart';
-import 'package:bottom_sheet_picker/widgets/pick_image.dart';
-import '/controllers/home_screen_controller.dart';
+import '/routers/app_routers.dart';
+import '/widgets/widgets.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '/widgets/bottom_sheet_picker.dart';
+import '../controllers/controllers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:snapping_sheet/snapping_sheet.dart';
 
 class HomeScreen extends GetView<HomeScreenController> {
   const HomeScreen({
@@ -12,152 +13,129 @@ class HomeScreen extends GetView<HomeScreenController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: bottomSheet,
+    return SafeArea(
+      child: Scaffold(
+        body: bottomSheet,
+      ),
     );
   }
 
   Widget get bottomSheet {
     return GetBuilder<HomeScreenController>(
-      builder: (_) => SnappingSheet(
-        lockOverflowDrag: true,
-        controller: controller.bottomSheetController,
+      builder: (_) => BottomSheetPicker(
+        controller: controller.sheetController,
+        body: body,
+        sheetBody: sheetBody,
+        sheetHeader: buildHeader,
+        bottomNavigation: buildBottomNavigation,
+        onSheetMoved: (data) {},
         onSnapCompleted: controller.onSnapCompleted,
-        grabbingHeight: 0.0,
-        child: body,
-        sheetBelow: SnappingSheetContent(
-          child: sheetBody,
-          draggable: true,
+        leading: IconButton(
+          onPressed: () {
+            controller.sheetController.close();
+          },
+          icon: const Icon(Icons.arrow_back),
         ),
-        snappingPositions: [
-          controller.lower,
-          controller.half,
-        ],
+        title: const Text(
+          'Gallery',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildHeader(Animation<double> anim) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.orange,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(10.0),
+        ),
+      ),
+      child: Opacity(
+        opacity: 1 - anim.value,
+        child: Center(
+          child: Container(
+            width: 60.0,
+            height: 4.0,
+            decoration: BoxDecoration(
+              color: Colors.black38,
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget get sheetBody {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(40.0),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.orange,
       ),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.orange,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20.0),
+      child: ImagePicker(
+        isCameraDispose: controller.isCameraDispose,
+        cameraController: controller.cameraController,
+        cameraScale: controller.middleScreenCameraScale,
+        files: controller.imageFiles,
+        scrollController: controller.scrollController,
+        physics: controller.gridViewPhysics,
+        onNotification: controller.onNotification,
+        onCamera: () {
+          controller.openCamera();
+        },
+        onDetail: (file) {
+          Get.toNamed(AppRoutes.imageDetail, arguments: {
+            'file_model': file,
+          });
+        },
+        pickFiles: (files) {},
+      ),
+    );
+  }
+
+  Widget get buildBottomNavigation {
+    return Container(
+      height: 50.0,
+      color: Colors.red,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: const [
+          Icon(
+            FontAwesomeIcons.camera,
+            size: 25.0,
           ),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 200.0,
-                height: 5.0,
-                margin: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                decoration: BoxDecoration(
-                  color: Colors.black26,
-                  borderRadius: BorderRadius.circular(3.0),
-                ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                height: 150.0,
-                child: PickImageBox(
-                  onCamera: controller.openCamera,
-                  cameraController: controller.cameraController!,
-                  scale: controller.middleScreenCameraScale,
-                  files: controller.imageFiles,
-                  scrollController: controller.scrollController,
-                  pickFile: controller.pickImageFile,
-                  onFile: controller.openImageFile,
-                ),
-              ),
-              const SizedBox(height: 10.0),
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  width: 200.0,
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  padding: const EdgeInsets.all(5.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/folder.png',
-                        width: 25.0,
-                      ),
-                      const SizedBox(width: 10.0),
-                      const Text(
-                        'File',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10.0),
-              GestureDetector(
-                onTap: () async => await controller.getFileFromGallery(),
-                child: Container(
-                  width: 200.0,
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  padding: const EdgeInsets.all(5.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/replace.png',
-                        width: 25.0,
-                      ),
-                      const SizedBox(width: 10.0),
-                      const Text(
-                        'Image Video',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          Icon(
+            FontAwesomeIcons.images,
+            size: 25.0,
           ),
-        ),
+          Icon(
+            FontAwesomeIcons.file,
+            size: 25.0,
+          ),
+        ],
       ),
     );
   }
 
   Widget get body {
-    return GestureDetector(
-      onTap: () =>
-          controller.bottomSheetController.snapToPosition(controller.lower),
-      child: Container(
-        color: Colors.transparent,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            MaterialButton(
-              color: Colors.red,
-              onPressed: () => controller.bottomSheetController
-                  .snapToPosition(controller.half),
-            ),
-          ],
-        ),
+    return Container(
+      color: Colors.transparent,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          MaterialButton(
+            color: Colors.red,
+            onPressed: () {
+              // Get.toNamed(AppRoutes.galleryPicker);
+              controller.sheetController.show();
+            },
+          ),
+        ],
       ),
     );
   }

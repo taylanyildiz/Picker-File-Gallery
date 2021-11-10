@@ -1,29 +1,42 @@
-import 'package:bottom_sheet_picker/models/file_model.dart';
+import 'package:camera/camera.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+import '/models/file_model.dart';
 import 'package:flutter/material.dart';
 
-class GalleryPicker extends StatefulWidget {
-  const GalleryPicker({
+class ImagePicker extends StatefulWidget {
+  const ImagePicker({
     Key? key,
-    required this.files,
-    required this.pickFiles,
+    required this.cameraController,
     required this.scrollController,
+    required this.cameraScale,
+    required this.onCamera,
+    required this.files,
     required this.onDetail,
-    required this.child,
-    this.maxSelect = 5,
+    required this.pickFiles,
+    this.maxSelect = 4,
+    this.physics = const AlwaysScrollableScrollPhysics(),
+    this.onNotification,
+    this.isCameraDispose = false,
   }) : super(key: key);
 
-  final List<FileModel> files;
-  final Function(List<FileModel> files) pickFiles;
-  final Function(FileModel file) onDetail;
-  final Widget Function(BuildContext context, int index) child;
+  final CameraController? cameraController;
   final ScrollController scrollController;
+  final List<FileModel> files;
+  final Function(FileModel file) onDetail;
+  final Function(List<FileModel> files) pickFiles;
+  final Function() onCamera;
+  final double cameraScale;
   final int maxSelect;
+  final ScrollPhysics? physics;
+  final bool Function(ScrollNotification notification)? onNotification;
+  final bool isCameraDispose;
 
   @override
-  State<GalleryPicker> createState() => _GalleryPickerState();
+  State<ImagePicker> createState() => _ImagePickerState();
 }
 
-class _GalleryPickerState extends State<GalleryPicker>
+class _ImagePickerState extends State<ImagePicker>
     with SingleTickerProviderStateMixin {
   late AnimationController controller;
 
@@ -31,20 +44,6 @@ class _GalleryPickerState extends State<GalleryPicker>
   int selectedIndexFile = -1;
   List<FileModel> fileList = [];
   int selectedCount = 0;
-
-  @override
-  void initState() {
-    controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    super.initState();
-  }
-
-  @override
-  void didUpdateWidget(covariant GalleryPicker oldWidget) {
-    super.didUpdateWidget(oldWidget);
-  }
 
   void removedFile(int index) {
     int removeIndex =
@@ -73,8 +72,8 @@ class _GalleryPickerState extends State<GalleryPicker>
       controller.reset();
     }
     if (widget.files[index].isSelected) {
-      selectedCount--;
       widget.files[index].isSelected = false;
+      selectedCount--;
       selectedIndexFile = -1;
       removedFile(index);
       setState(() {});
@@ -94,28 +93,83 @@ class _GalleryPickerState extends State<GalleryPicker>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      return SizedBox(
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        child: GridView.builder(
-          shrinkWrap: true,
-          controller: widget.scrollController,
-          padding: const EdgeInsets.all(5.0),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 5.0,
-            mainAxisSpacing: 5.0,
-          ),
-          itemCount: widget.files.length,
-          itemBuilder: itemBuilder,
-        ),
-      );
-    });
+  void initState() {
+    controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    )..addListener(() {
+        setState(() {});
+      });
+    super.initState();
   }
 
-  Widget itemBuilder(context, index) {
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: widget.onNotification,
+      child: GridView.builder(
+        controller: widget.scrollController,
+        physics: widget.physics,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 5.0,
+          crossAxisSpacing: 5.0,
+        ),
+        padding: const EdgeInsets.only(
+          left: 10.0,
+          right: 10.0,
+          top: 10.0,
+          bottom: 10.0,
+        ),
+        itemCount: widget.files.length + 1,
+        itemBuilder: (context, index) {
+          return Hero(
+            tag: '$index-camera',
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                child: (() {
+                  if (index == 0) {
+                    return buildCamera;
+                  } else {
+                    return buildFiles(index - 1);
+                  }
+                }()),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget get buildCamera {
+    return GestureDetector(
+      onTap: widget.onCamera,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          widget.cameraController != null && !widget.isCameraDispose
+              ? Transform.scale(
+                  scale: widget.cameraScale,
+                  child: CameraPreview(widget.cameraController!),
+                )
+              : const SizedBox(),
+          const Icon(
+            FontAwesomeIcons.camera,
+            color: Colors.white,
+            size: 30.0,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildFiles(index) {
     return GestureDetector(
       onTap: () {
         if (multiSelection && selectedCount != 0) {
@@ -127,47 +181,21 @@ class _GalleryPickerState extends State<GalleryPicker>
       onLongPress: () {
         onLongPress(index);
       },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(5.0),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5.0),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const Icon(
+            Icons.image,
+            color: Colors.black,
           ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              buildChild(context, index),
-              selectedCount != 0 ? buildSelectionBox(index) : const SizedBox(),
-            ],
+          Image.file(
+            widget.files[index].file!,
+            width: double.infinity,
+            fit: BoxFit.cover,
           ),
-        ),
+          selectedCount != 0 ? buildSelectionBox(index) : const SizedBox(),
+        ],
       ),
-    );
-  }
-
-  Widget buildChild(context, index) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, child) {
-        return Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity()
-            ..scale(
-              selectedIndexFile == index
-                  ? .9
-                  : widget.files[index].isSelected
-                      ? .9
-                      : 1.0,
-              selectedIndexFile == index
-                  ? .9
-                  : widget.files[index].isSelected
-                      ? .9
-                      : 1.0,
-            ),
-          child: child,
-        );
-      },
-      child: widget.child(context, index),
     );
   }
 

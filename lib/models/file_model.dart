@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:ui';
 import 'package:photo_manager/photo_manager.dart';
 
 class FileModel {
@@ -9,6 +9,8 @@ class FileModel {
     required this.extention,
     required this.type,
     required this.duration,
+    this.isSelected = false,
+    this.size,
   });
 
   String? path;
@@ -16,4 +18,6 @@ class FileModel {
   String? extention;
   AssetType? type;
   Duration? duration;
+  bool isSelected;
+  Size? size;
 }

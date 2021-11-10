@@ -21,5 +21,15 @@ class AppPages {
       page: () => const SendImageScreen(),
       binding: SendImageScreenBinding(),
     ),
+    GetPage(
+      name: AppRoutes.imageDetail,
+      page: () => const ImageDetailScreen(),
+      binding: ImageDetailBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.camera,
+      page: () => const CameraScreen(),
+      binding: CameraSceenBinding(),
+    ),
   ];
 }

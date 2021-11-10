@@ -1,8 +1,5 @@
 import 'dart:developer';
-import 'package:bottom_sheet_picker/main.dart';
-import 'package:camera/camera.dart';
-
-import '/controllers/home_screen_controller.dart';
+import '../controllers/home_screen_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 
@@ -24,14 +21,13 @@ class LifeCycleService extends GetxService with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
         log('Resumed');
-        _initializedCamera();
         break;
       case AppLifecycleState.inactive:
         log('Inactive');
-        await _disposeCamera();
         break;
       case AppLifecycleState.paused:
         log('Paused');
+        await _disposeCamera();
         break;
       case AppLifecycleState.detached:
         log('Detached');
@@ -42,17 +38,11 @@ class LifeCycleService extends GetxService with WidgetsBindingObserver {
 
   Future<void> _disposeCamera() async {
     final homeScreenController = Get.find<HomeScreenController>();
-    homeScreenController.bottomSheetController.snapToPosition(
-      homeScreenController.lower,
-    );
-    await homeScreenController.cameraController!.dispose();
-  }
 
-  void _initializedCamera() {
-    final homeScreenController = Get.find<HomeScreenController>();
-    homeScreenController.cameraController = CameraController(
-      cameras![0],
-      ResolutionPreset.max,
-    );
+    if (homeScreenController.cameraController != null) {
+      if (homeScreenController.cameraController!.value.isInitialized) {
+        await homeScreenController.cameraController!.dispose();
+      }
+    }
   }
 }

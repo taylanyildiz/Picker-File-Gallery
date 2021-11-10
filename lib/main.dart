@@ -1,4 +1,4 @@
-import 'package:bottom_sheet_picker/controllers/controllers.dart';
+import 'package:flutter/services.dart';
 
 import '/bindings/home_binding.dart';
 import 'routers/app_routers.dart';
@@ -9,10 +9,23 @@ import 'package:camera/camera.dart';
 
 List<CameraDescription>? cameras;
 
+void setFullScreen() {
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+    overlays: [],
+  );
+}
+
+Future<void> setNormalScreen() async {
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
+    SystemUiOverlay.bottom,
+    SystemUiOverlay.top,
+  ]);
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   cameras = await availableCameras();
-  await GalleryPickerController.getFileFromGallery();
   runApp(const App());
 }
 

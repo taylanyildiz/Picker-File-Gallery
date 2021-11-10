@@ -1,30 +1,20 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
-import 'package:bottom_sheet_picker/routers/app_routers.dart';
+import 'package:photo_manager/photo_manager.dart';
 
 import '/controllers/controllers.dart';
-import 'package:bottom_sheet_picker/main.dart';
+import '/widgets/widgets.dart';
+import '/routers/app_routers.dart';
+import '/main.dart';
 import '/models/file_model.dart';
-import '/screens/screens.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:snapping_sheet/snapping_sheet.dart';
 
 class HomeScreenController extends GetxController {
-  /// Bottom sheet controller
-  final bottomSheetController = SnappingSheetController();
-
   /// Camera controller.
   CameraController? cameraController;
-
-  /// Screen pixel.
-  double pixels = 0.0;
-
-  /// Video timer.
-  Timer? timer;
 
   /// Image files
   List<FileModel> imageFiles = [];
@@ -32,11 +22,17 @@ class HomeScreenController extends GetxController {
   /// Controller of list.
   late ScrollController scrollController;
 
+  /// CameraController is dispose check
+  bool isCameraDispose = true;
+
+  ScrollPhysics? gridViewPhysics = const NeverScrollableScrollPhysics();
+
+  BottomSheetController sheetController = BottomSheetController();
+
   @override
   void onInit() async {
-    cameraController = CameraController(cameras![0], ResolutionPreset.max);
-    scrollController = ScrollController(initialScrollOffset: 0.0);
-    update();
+    scrollController = ScrollController(initialScrollOffset: 0.0)
+      ..addListener(_scrollListen);
     super.onInit();
   }
 
@@ -47,61 +43,65 @@ class HomeScreenController extends GetxController {
     super.dispose();
   }
 
+  void _scrollListen() async {
+    if (scrollController.position.atEdge) {
+      if (scrollController.position.pixels == 0) {
+        log('Scroll at top');
+      } else {
+        log('Scroll at bottom');
+        try {
+          // Get files.
+          await getImageFiles();
+        } catch (e) {
+          log('No more document');
+        }
+      }
+    }
+  }
+
+  Future<void> getImageFiles() async {
+    imageFiles = await GalleryPickerController.getImageFiles(imageFiles);
+    update();
+  }
+
+  bool onNotification(scrollState) {
+    if (scrollState is ScrollEndNotification) {
+      if (scrollState.metrics.pixels == 0.0) {
+        gridViewPhysics = const NeverScrollableScrollPhysics();
+        update();
+      }
+    }
+    return true;
+  }
+
   void initializedCamera({int lens = 0}) {
     cameraController = CameraController(cameras![lens], ResolutionPreset.max)
       ..initialize().then((value) {
         update();
         return;
+      }).onError((error, stackTrace) {
+        log('CAMERA ERROR :\n' + error.toString());
       });
   }
 
-  Future<bool> onWillPop() async {
-    Get.back();
-    setScreenNormal();
-    return true;
-  }
-
-  /// Position of bottom sheet.
-  SnappingPosition lower = const SnappingPosition.factor(
-    positionFactor: .0,
-    snappingCurve: Curves.easeOutExpo,
-    snappingDuration: Duration(milliseconds: 400),
-    grabbingContentOffset: GrabbingContentOffset.top,
-  );
-
-  SnappingPosition half = const SnappingPosition.factor(
-    positionFactor: .5,
-    snappingCurve: Curves.easeOutExpo,
-    snappingDuration: Duration(milliseconds: 400),
-    grabbingContentOffset: GrabbingContentOffset.top,
-  );
-
-  void onSnapCompleted(data, position) async {
-    scrollController.animateTo(
-      0.0,
-      duration: const Duration(microseconds: 1),
-      curve: Curves.bounceOut,
-    );
-    if (data.pixels != 0) {
-      if (pixels == 0) {
-        pixels = data.pixels;
-        imageFiles = await GalleryPickerController.getImageFiles();
-        update();
+  void onSnapCompleted(double data) async {
+    if (data <= 0.0) {
+      isCameraDispose = true;
+      cameraController!.dispose();
+      gridViewPhysics = const NeverScrollableScrollPhysics();
+    } else if (data > 0.0 && data <= .52) {
+      gridViewPhysics = const NeverScrollableScrollPhysics();
+      if (isCameraDispose == true) {
+        isCameraDispose = false;
         initializedCamera();
+        await getImageFiles();
       }
-    } else {
-      pixels = 0.0;
-      await cameraController!.dispose();
+    } else if (data < .93 && data > 0.5) {
+      gridViewPhysics = const NeverScrollableScrollPhysics();
+    } else if (data >= .93) {
+      gridViewPhysics = const AlwaysScrollableScrollPhysics();
     }
-  }
-
-  double get fullScreenCameraScale {
-    double aspectRatio = 1.0;
-    double pixelRati = MediaQuery.of(Get.context!).size.aspectRatio;
-    if (cameraController!.value.previewSize != null) {
-      aspectRatio = cameraController!.value.aspectRatio;
-    }
-    return 1 / (aspectRatio * pixelRati);
+    update();
   }
 
   double get middleScreenCameraScale {
@@ -116,72 +116,16 @@ class HomeScreenController extends GetxController {
     }
   }
 
-  Future<void> setScreenNormal() async {
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
-      SystemUiOverlay.bottom,
-      SystemUiOverlay.top,
-    ]);
-  }
-
-  void setScreenFull() {
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.immersiveSticky,
-      overlays: [],
-    );
-  }
-
   void openCamera() {
-    Get.to(() => const CameraScreen());
-    setScreenFull();
+    Get.toNamed(AppRoutes.camera, arguments: {'camera': cameraController});
+    // sheetController.close();
   }
-
-  void pickImageFile(File file) {}
 
   void openImageFile(File file) async {
     Get.toNamed(AppRoutes.sendImage, arguments: file);
   }
 
-  void backFromCamera() async {
-    await setScreenNormal();
-    Get.back();
-  }
-
-  void setCameraLens() async {
-    int lens = cameraController!.description.lensDirection.index;
-    if (cameraController != null) {
-      await cameraController!.dispose();
-    }
-    initializedCamera(lens: lens);
-  }
-
-  Future<void> takePhoto() async {
-    if (!cameraController!.value.isRecordingVideo) {
-      File file = File((await cameraController!.takePicture()).path);
-    }
-  }
-
-  Future<void> recordVideo() async {
-    if (timer != null) {
-      timer!.cancel();
-    }
-    timer = Timer(const Duration(seconds: 1), () async {
-      if (timer!.tick == 1) {
-        await cameraController!.startVideoRecording();
-        update();
-      }
-      if (timer!.tick != 1) {}
-    });
-  }
-
-  Future<void> saveVideo() async {
-    if (cameraController!.value.isRecordingVideo) {
-      timer!.cancel();
-      File file = File((await cameraController!.stopVideoRecording()).path);
-    }
-  }
-
-  Future<void> getFileFromGallery() async {
-    List<FileModel> file = await GalleryPickerController.getFileFromGallery();
-    Get.toNamed(AppRoutes.galleryPicker, arguments: file);
+  void getFileFromGallery() {
+    Get.toNamed(AppRoutes.galleryPicker);
   }
 }

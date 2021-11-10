@@ -1,20 +1,20 @@
-import 'package:bottom_sheet_picker/controllers/home_screen_controller.dart';
-import 'package:bottom_sheet_picker/widgets/camera_button.dart';
+import '/controllers/controllers.dart';
+import '/widgets/widgets.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class CameraScreen extends GetView<HomeScreenController> {
+class CameraScreen extends GetView<CameraScreenController> {
   const CameraScreen({
     Key? key,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: WillPopScope(
-        onWillPop: controller.onWillPop,
-        child: GetBuilder<HomeScreenController>(builder: (context) {
+    return WillPopScope(
+      onWillPop: controller.onWillPop,
+      child: Scaffold(
+        body: GetBuilder<CameraScreenController>(builder: (context) {
           return Stack(
             alignment: Alignment.bottomCenter,
             children: [
@@ -51,7 +51,7 @@ class CameraScreen extends GetView<HomeScreenController> {
       top: 20.0,
       left: 10.0,
       child: GestureDetector(
-        onTap: controller.backFromCamera,
+        onTap: controller.onBack,
         child: const Icon(
           Icons.close,
           color: Colors.white,
@@ -108,7 +108,7 @@ class CameraScreen extends GetView<HomeScreenController> {
 
   Widget get buildCameraTakeButton {
     return CameraButton(
-      onTakePicture: controller.takePhoto,
+      onTakePicture: controller.takePicture,
       onStartRecordingVideo: controller.recordVideo,
       onSaveVideo: controller.saveVideo,
     );
