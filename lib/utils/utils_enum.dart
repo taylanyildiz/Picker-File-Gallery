@@ -32,18 +32,22 @@ class UtilsEnum {
   static indexToImageDetailType(int index) {
     switch (index) {
       case 0:
-        return EImageDetailMode.gesture;
+        return EFileDetailMode.gesture;
       case 1:
-        return EImageDetailMode.edit;
+        return EFileDetailMode.imageEdit;
+      case 2:
+        return EFileDetailMode.videoEdit;
     }
   }
 
-  static imageDetailTypeToIndex(EImageDetailMode mode) {
+  static imageDetailTypeToIndex(EFileDetailMode mode) {
     switch (mode) {
-      case EImageDetailMode.gesture:
+      case EFileDetailMode.gesture:
         return 0;
-      case EImageDetailMode.edit:
+      case EFileDetailMode.imageEdit:
         return 1;
+      case EFileDetailMode.videoEdit:
+        return 2;
     }
   }
 }

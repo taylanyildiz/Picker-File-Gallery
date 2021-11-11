@@ -4,7 +4,6 @@ import '/models/file_model.dart';
 import '/widgets/widgets.dart';
 import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
 
 class GalleryPickerScreen extends GetView<GalleryPickerScreenController> {
@@ -23,7 +22,7 @@ class GalleryPickerScreen extends GetView<GalleryPickerScreenController> {
           padding: const EdgeInsets.only(top: 20.0),
           child: GalleryPicker(
             scrollController: controller.scrollController,
-            pickFiles: (file) {},
+            pickFiles: controller.pickFiles,
             onDetail: controller.onDetail,
             files: controller.files,
             child: (context, index) {
@@ -32,8 +31,27 @@ class GalleryPickerScreen extends GetView<GalleryPickerScreenController> {
                   return _ImagePicker(
                       fileModel: galleryPickerController.files[index]);
                 case AssetType.video:
-                  return _VideoPicker(
-                      fileModel: galleryPickerController.files[index]);
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.memory(
+                        galleryPickerController.files[index].thumbData!,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow,
+                          color: Colors.black,
+                        ),
+                      )
+                    ],
+                  );
                 case AssetType.audio:
                   return Container();
                 case AssetType.other:
@@ -56,12 +74,24 @@ class GalleryPickerScreen extends GetView<GalleryPickerScreenController> {
         icon: const Icon(Icons.arrow_back_ios),
         onPressed: () => Get.back(),
       ),
-      title: const Text(
-        'Select Photo',
-        style: TextStyle(
+      title: Text(
+        controller.selectedFile.isEmpty
+            ? 'Gallery'
+            : '${controller.selectedFile.length} Selected',
+        style: const TextStyle(
           color: Colors.white,
         ),
       ),
+      actions: [
+        Visibility(
+          visible: controller.selectedFile.isNotEmpty,
+          child: IconButton(
+            onPressed: controller.selectFiles,
+            icon: const Icon(Icons.done),
+            color: Colors.white,
+          ),
+        )
+      ],
     );
   }
 }
@@ -95,62 +125,5 @@ class _ImagePicker extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class _VideoPicker extends StatefulWidget {
-  const _VideoPicker({
-    Key? key,
-    required this.fileModel,
-  }) : super(key: key);
-
-  final FileModel fileModel;
-
-  @override
-  State<_VideoPicker> createState() => _VideoPickerState();
-}
-
-class _VideoPickerState extends State<_VideoPicker> {
-  late VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    _controller = VideoPlayerController.file(widget.fileModel.file!)
-      ..initialize().then((value) {
-        setState(() {});
-      });
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _controller.value.isInitialized
-        ? Stack(
-            alignment: Alignment.center,
-            children: [
-              VideoPlayer(_controller),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(.3),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          )
-        : Container(
-            decoration: BoxDecoration(
-              border: Border.all(width: 1.0, color: Colors.black),
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.image,
-                color: Colors.black,
-              ),
-            ),
-          );
   }
 }

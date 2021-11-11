@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import '/models/file_model.dart';
 import 'package:photo_manager/photo_manager.dart';
 
@@ -35,13 +36,57 @@ class GalleryPickerController {
     return list;
   }
 
+  /// Save image file
+  static Future<FileModel?> saveImage(File file) async {
+    AssetEntity? assetEntity = await PhotoManager.editor.saveImageWithPath(
+      file.path,
+    );
+    if (assetEntity != null) {
+      return await _getFileModel(assetEntity);
+    }
+  }
+
+  /// Save video file
+  static Future<FileModel?> saveVideo(File file) async {
+    AssetEntity? assetEntity = await PhotoManager.editor.saveVideo(file);
+    if (assetEntity != null) {
+      return await _getFileModel(assetEntity);
+    }
+  }
+
+  static Future<FileModel?> _getFileModel(AssetEntity assetEntity) async {
+    final id = assetEntity.id;
+    final assetFile = await assetEntity.originFile;
+    final thumbData = await assetEntity.thumbData;
+    final size = assetEntity.size;
+    final extention = assetEntity.mimeType?.split('/')[1] ?? '';
+    final type = assetEntity.type;
+    final videoDuration = assetEntity.videoDuration;
+    if (assetFile != null) {
+      final fileModel = FileModel(
+        id: id,
+        file: assetFile,
+        path: assetFile.path,
+        thumbData: thumbData,
+        extention: extention,
+        type: type,
+        duration: videoDuration,
+        size: size,
+      );
+      return fileModel;
+    }
+  }
+
   static Future<List<AssetEntity>> _getAssetList(
       RequestType type, List list) async {
     List<AssetEntity> assetList = [];
     List<AssetPathEntity> _list = await PhotoManager.getAssetPathList(
       type: type,
-      onlyAll: true,
       hasAll: true,
+      onlyAll: true,
+      filterOption: FilterOptionGroup(
+        orders: [const OrderOption(asc: true)],
+      ),
     );
     for (AssetPathEntity path in _list) {
       assetList.addAll(await path.getAssetListRange(
@@ -56,19 +101,8 @@ class GalleryPickerController {
     List<FileModel> modelList = [];
     if (entity.isNotEmpty) {
       for (var file in entity) {
-        final assetFile = await file.originFile;
-        final size = file.size;
-        final id = file.id;
-        if (assetFile != null) {
-          final fileModel = FileModel(
-            id: id,
-            file: assetFile,
-            path: assetFile.path,
-            extention: file.mimeType?.split('/')[1] ?? '',
-            type: file.type,
-            duration: file.videoDuration,
-            size: size,
-          );
+        final fileModel = await _getFileModel(file);
+        if (fileModel != null) {
           modelList.add(fileModel);
         }
       }

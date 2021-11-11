@@ -99,6 +99,10 @@ class HomeScreenController extends GetxController {
 
   void onBottomNavigation(int index) {
     EBottomNavigationType type = UtilsEnum.indexToBottomNavigationType(index);
+    sheetController.close();
+    isCameraDispose = true;
+    cameraController!.dispose();
+    update();
     switch (type) {
       case EBottomNavigationType.gallery:
         Get.toNamed(AppRoutes.galleryPicker);
@@ -143,7 +147,7 @@ class HomeScreenController extends GetxController {
   }
 
   void onDetail(FileModel fileModel) {
-    Get.toNamed(AppRoutes.imageDetail, arguments: {
+    Get.toNamed(AppRoutes.galleryDetail, arguments: {
       'file_model': fileModel,
       'file_models': List.generate(imageFiles.length, (index) {
         return imageFiles[index];

@@ -5,7 +5,8 @@ enum EBottomNavigationType {
   constacts,
 }
 
-enum EImageDetailMode {
+enum EFileDetailMode {
   gesture,
-  edit,
+  imageEdit,
+  videoEdit,
 }

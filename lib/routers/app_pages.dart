@@ -22,9 +22,9 @@ class AppPages {
       binding: SendImageScreenBinding(),
     ),
     GetPage(
-      name: AppRoutes.imageDetail,
-      page: () => const ImageDetailScreen(),
-      binding: ImageDetailBinding(),
+      name: AppRoutes.galleryDetail,
+      page: () => const GalleryDetailScreen(),
+      binding: GalleryDetailBinding(),
     ),
     GetPage(
       name: AppRoutes.camera,

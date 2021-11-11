@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:bottom_sheet_picker/controllers/controllers.dart';
-import 'package:bottom_sheet_picker/models/file_model.dart';
-import 'package:photo_manager/photo_manager.dart';
-
+import '/controllers/controllers.dart';
+import '/models/file_model.dart';
 import '/routers/app_routers.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -68,23 +66,12 @@ class CameraScreenController extends GetxController {
 
   Future<void> takePicture() async {
     File file = File((await cameraController!.takePicture()).path);
-    AssetEntity? imageEntity = await PhotoManager.editor.saveImageWithPath(
-      file.path,
-    );
-    if (imageEntity != null) {
-      final fileModel = FileModel(
-        id: imageEntity.id,
-        file: await imageEntity.originFile,
-        path: imageEntity.relativePath,
-        extention: imageEntity.mimeType!.split('/')[1],
-        type: AssetType.image,
-        duration: imageEntity.videoDuration,
-      );
-      Get.toNamed(AppRoutes.imageDetail, arguments: {
-        'file_model': fileModel,
-        'isCamera': true,
-      });
-    }
+    FileModel? fileModel = await GalleryPickerController.saveImage(file);
+
+    Get.toNamed(AppRoutes.galleryDetail, arguments: {
+      'file_model': fileModel,
+      'isCamera': true,
+    });
   }
 
   Future<void> recordVideo() async {
@@ -104,6 +91,11 @@ class CameraScreenController extends GetxController {
     if (cameraController!.value.isRecordingVideo) {
       timer!.cancel();
       File file = File((await cameraController!.stopVideoRecording()).path);
+      FileModel? fileModel = await GalleryPickerController.saveVideo(file);
+      Get.toNamed(AppRoutes.galleryDetail, arguments: {
+        'file_model': fileModel,
+        'isCamera': true,
+      });
     }
   }
 

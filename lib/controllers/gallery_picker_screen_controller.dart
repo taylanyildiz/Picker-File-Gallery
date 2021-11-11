@@ -1,16 +1,18 @@
 import 'dart:developer' as console;
-import 'package:bottom_sheet_picker/controllers/controllers.dart';
-import 'package:bottom_sheet_picker/models/file_model.dart';
-import 'package:bottom_sheet_picker/routers/app_routers.dart';
+import 'dart:math';
+import '/controllers/controllers.dart';
+import '/models/file_model.dart';
+import '/routers/app_routers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
-import 'package:photo_manager/photo_manager.dart';
 
 class GalleryPickerScreenController extends GetxController {
   /// Scroll Controller.
   final scrollController = ScrollController();
 
   List<FileModel> files = [];
+
+  List<FileModel> selectedFile = [];
 
   @override
   void onInit() async {
@@ -39,17 +41,19 @@ class GalleryPickerScreenController extends GetxController {
     update();
   }
 
+  void pickFiles(List<FileModel> fileModels) {
+    selectedFile = fileModels;
+    update();
+  }
+
+  void selectFiles() {
+    log(selectedFile.length);
+  }
+
   void onDetail(FileModel fileModel) {
-    if (fileModel.type == AssetType.image) {
-      final imageFiles = files.where((e) => e.type == AssetType.image).toList();
-      Get.toNamed(AppRoutes.imageDetail, arguments: {
-        'file_model': fileModel,
-        'file_models': imageFiles,
-      });
-    } else if (fileModel.type == AssetType.video) {
-      final videoFiles = files.where((e) => e.type == AssetType.video).toList();
-    } else {
-      // TODO: AUDIO handler
-    }
+    Get.toNamed(AppRoutes.galleryDetail, arguments: {
+      'file_model': fileModel,
+      'file_models': files,
+    });
   }
 }
