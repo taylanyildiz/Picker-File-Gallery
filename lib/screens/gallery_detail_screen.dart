@@ -35,7 +35,7 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
         elevation: 0.0,
         backgroundColor: const Color(0xff1e2b34),
         leading: GestureDetector(
-          onTap: () => Get.back(),
+          onTap: controller.onBack,
           child: const Icon(
             Icons.arrow_back,
             color: Colors.white,

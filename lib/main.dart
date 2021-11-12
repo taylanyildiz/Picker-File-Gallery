@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-
 import '/bindings/home_binding.dart';
 import 'routers/app_routers.dart';
 import 'routers/app_pages.dart';

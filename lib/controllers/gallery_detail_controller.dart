@@ -47,39 +47,37 @@ class GalleryDetailController extends GetxController {
 
   @override
   void onInit() async {
-    await getArguments();
+    getArguments();
     initializePageControllers();
     await setNormalScreen();
     super.onInit();
   }
 
   Future<bool> onWillPop() async {
-    await setScreen();
-    Get.back();
+    if (isCamera) {
+      setFullScreen();
+    } else {
+      await setNormalScreen();
+    }
     return true;
   }
 
-  void onCancel() async {
-    switch (fileDetailMode) {
-      case EFileDetailMode.gesture:
-        if (isCamera) {
-          setFullScreen();
-        } else {
-          await setNormalScreen();
-        }
-        Get.back();
-        return;
-      default:
-        fileDetailMode = EFileDetailMode.gesture;
-        update();
-        break;
+  void onBack() async {
+    if (isCamera) {
+      setFullScreen();
+    } else {
+      await setNormalScreen();
     }
+    Get.back();
   }
 
   Future<void> getArguments() async {
     isCamera = Get.arguments['isCamera'] ?? false;
     fileModel = Get.arguments['file_model'];
-    await getFiles();
+    fileModels = [];
+    if (!isCamera) {
+      await getFiles();
+    }
     if (fileModels.isEmpty) {
       fileModels = [fileModel];
     }

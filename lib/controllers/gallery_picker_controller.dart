@@ -47,8 +47,9 @@ class GalleryPickerController {
   }
 
   /// Save video file
-  static Future<FileModel?> saveVideo(File file) async {
-    AssetEntity? assetEntity = await PhotoManager.editor.saveVideo(file);
+  static Future<FileModel?> saveVideo(File file, String title) async {
+    AssetEntity? assetEntity =
+        await PhotoManager.editor.saveVideo(file, title: title);
     if (assetEntity != null) {
       return await _getFileModel(assetEntity);
     }

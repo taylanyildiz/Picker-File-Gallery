@@ -91,7 +91,8 @@ class CameraScreenController extends GetxController {
     if (cameraController!.value.isRecordingVideo) {
       timer!.cancel();
       File file = File((await cameraController!.stopVideoRecording()).path);
-      FileModel? fileModel = await GalleryPickerController.saveVideo(file);
+      FileModel? fileModel =
+          await GalleryPickerController.saveVideo(file, 'title');
       Get.toNamed(AppRoutes.galleryDetail, arguments: {
         'file_model': fileModel,
         'isCamera': true,
