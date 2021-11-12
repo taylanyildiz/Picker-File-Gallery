@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
+import 'package:bottom_sheet_picker/dialogs/circular_process_dialog.dart';
+
 import '/screens/screens.dart';
 import 'package:video_trimmer/video_trimmer.dart';
 import '/controllers/controllers.dart';
@@ -11,9 +13,12 @@ import 'package:get/get.dart';
 import 'package:image_crop/image_crop.dart';
 import '/main.dart';
 
+const ffmegCommand =
+    '-vf "fps=10,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0';
+
 class GalleryDetailController extends GetxController {
   /// All Image files
-  late List<FileModel> fileModels;
+  List<FileModel> fileModels = [];
 
   /// Image detail file.
   late FileModel fileModel;
@@ -42,7 +47,7 @@ class GalleryDetailController extends GetxController {
 
   @override
   void onInit() async {
-    getArguments();
+    await getArguments();
     initializePageControllers();
     await setNormalScreen();
     super.onInit();
@@ -71,10 +76,13 @@ class GalleryDetailController extends GetxController {
     }
   }
 
-  void getArguments() async {
+  Future<void> getArguments() async {
     isCamera = Get.arguments['isCamera'] ?? false;
     fileModel = Get.arguments['file_model'];
-    fileModels = Get.arguments['file_models'] ?? [fileModel];
+    await getFiles();
+    if (fileModels.isEmpty) {
+      fileModels = [fileModel];
+    }
     selectIndex = fileModels.indexWhere((e) => e.id == fileModel.id);
     selectedFileModel = fileModel;
     if (!isCamera && selectIndex == fileModels.length - 1) {
@@ -180,7 +188,7 @@ class GalleryDetailController extends GetxController {
     }
   }
 
-  Future<void> cropImage(cropKey) async {
+  Future<void> cropImage(GlobalKey<CropState> cropKey) async {
     final scale = cropKey.currentState!.scale;
     final area = cropKey.currentState!.area;
     if (area == null) return;
@@ -197,5 +205,16 @@ class GalleryDetailController extends GetxController {
     Get.to(() => ImageScreen(file: cropFile));
   }
 
-  Future<void> trimVideo(trimmer) async {}
+  Future<void> trimVideo(Trimmer trimmer, double start, double end) async {
+    Get.dialog(const CircularProcessDialog(), barrierDismissible: false);
+    final path = await trimmer.saveTrimmedVideo(
+      applyVideoEncoding: true,
+      startValue: start,
+      endValue: end,
+      ffmpegCommand: ffmegCommand,
+      customVideoFormat: '.mp4',
+    );
+    Get.back();
+    Get.to(() => VideoDetailScreen(path: path));
+  }
 }

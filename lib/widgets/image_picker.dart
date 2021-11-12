@@ -106,7 +106,10 @@ class _ImagePickerState extends State<ImagePicker>
         selectedIndexFile = index;
       } else {
         selectedIndexFile = -1;
-        Utils.showSnackBar('Error', 'Only 4 files selection enable.');
+        Utils.showSnackBar(
+          'Error',
+          'Only ${widget.maxSelect} files selection enable.',
+        );
       }
     }
 

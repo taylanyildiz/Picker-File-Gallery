@@ -14,10 +14,18 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
   Widget build(BuildContext context) {
     return GetBuilder<GalleryDetailController>(
       builder: (_) {
-        return Scaffold(
-          appBar: buildAppBar,
-          body: buildFiles,
-        );
+        if (controller.fileModels.isNotEmpty) {
+          return Scaffold(
+            appBar: buildAppBar,
+            body: buildFiles,
+          );
+        } else {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Colors.red,
+            ),
+          );
+        }
       },
     );
   }

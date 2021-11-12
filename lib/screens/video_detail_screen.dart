@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:get/get.dart';
+
 import '/models/file_model.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -6,9 +9,11 @@ import 'package:video_player/video_player.dart';
 class VideoDetailScreen extends StatefulWidget {
   const VideoDetailScreen({
     Key? key,
-    required this.fileModel,
+    this.fileModel,
+    this.path,
   }) : super(key: key);
   final FileModel? fileModel;
+  final String? path;
 
   @override
   State<VideoDetailScreen> createState() => _VideoDetailScreenState();
@@ -17,24 +22,25 @@ class VideoDetailScreen extends StatefulWidget {
 class _VideoDetailScreenState extends State<VideoDetailScreen> {
   /// Video player.
   VideoPlayerController? playerController;
-
+  late File file;
   bool isPlay = false;
   bool isShowPlayButton = true;
   Timer? timer;
 
   @override
   void initState() {
-    playerController = VideoPlayerController.file(widget.fileModel!.file!)
-      ..initialize().then((value) {})
-      ..addListener(() {
-        isPlay = playerController!.value.isPlaying;
-        if (playerController!.value.duration ==
-            playerController!.value.position) {
-          isPlay = false;
-          isShowPlayButton = true;
-        }
-        setState(() {});
-      });
+    file = widget.fileModel?.file ?? File(widget.path!);
+    playerController = VideoPlayerController.file(file)
+      ..initialize().then((value) {});
+    playerController!.addListener(() {
+      isPlay = playerController!.value.isPlaying;
+      if (playerController!.value.duration ==
+          playerController!.value.position) {
+        isPlay = false;
+        isShowPlayButton = true;
+      }
+      setState(() {});
+    });
     super.initState();
   }
 
@@ -67,7 +73,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
     isShowPlayButton = true;
     setState(() {});
     if (isPlay) {
-      timer = Timer(const Duration(milliseconds: 500), () {
+      timer = Timer(const Duration(seconds: 1), () {
         isShowPlayButton = false;
         setState(() {});
       });
@@ -84,6 +90,8 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
           children: [
             VideoPlayer(playerController!),
             buildPlayButton,
+            buildVideProgressIndicator,
+            buildPlayProgressButton,
           ],
         ),
       );
@@ -92,6 +100,36 @@ class _VideoDetailScreenState extends State<VideoDetailScreen> {
         child: CircularProgressIndicator(color: Colors.red),
       );
     }
+  }
+
+  Widget get buildVideProgressIndicator {
+    return Positioned(
+      bottom: 20.0,
+      width: Get.width,
+      child: VideoProgressIndicator(
+        playerController!,
+        padding: const EdgeInsets.only(left: 60.0, right: 10.0),
+        allowScrubbing: true,
+        colors: const VideoProgressColors(
+          playedColor: Colors.red,
+        ),
+      ),
+    );
+  }
+
+  Widget get buildPlayProgressButton {
+    return Positioned(
+      bottom: 10.0,
+      left: 10.0,
+      child: GestureDetector(
+        onTap: onPlay,
+        child: Icon(
+          !isPlay ? Icons.play_arrow : Icons.pause,
+          size: 25,
+          color: Colors.white,
+        ),
+      ),
+    );
   }
 
   Widget get buildPlayButton {

@@ -149,9 +149,6 @@ class HomeScreenController extends GetxController {
   void onDetail(FileModel fileModel) {
     Get.toNamed(AppRoutes.galleryDetail, arguments: {
       'file_model': fileModel,
-      'file_models': List.generate(imageFiles.length, (index) {
-        return imageFiles[index];
-      })
     });
   }
 

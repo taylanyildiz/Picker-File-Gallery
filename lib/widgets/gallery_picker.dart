@@ -1,4 +1,5 @@
 import 'package:bottom_sheet_picker/models/file_model.dart';
+import 'package:bottom_sheet_picker/utils/utils.dart';
 import 'package:flutter/material.dart';
 
 class GalleryPicker extends StatefulWidget {
@@ -87,6 +88,10 @@ class _GalleryPickerState extends State<GalleryPicker>
         selectedIndexFile = index;
       } else {
         selectedIndexFile = -1;
+        Utils.showSnackBar(
+          'Error',
+          'Only ${widget.maxSelect} files selection enable.',
+        );
       }
     }
 

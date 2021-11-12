@@ -53,7 +53,6 @@ class GalleryPickerScreenController extends GetxController {
   void onDetail(FileModel fileModel) {
     Get.toNamed(AppRoutes.galleryDetail, arguments: {
       'file_model': fileModel,
-      'file_models': files,
     });
   }
 }
