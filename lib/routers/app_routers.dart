@@ -5,4 +5,5 @@ class AppRoutes {
   static const String galleryPicker = '/gallery_picker';
   static const String galleryDetail = '/gallery_detail';
   static const String camera = '/camera';
+  static const String files = '/files';
 }

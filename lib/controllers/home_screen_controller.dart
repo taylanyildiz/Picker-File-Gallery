@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
-import 'package:bottom_sheet_picker/enums/enums.dart';
-import 'package:bottom_sheet_picker/utils/utils_enum.dart';
-import 'package:photo_manager/photo_manager.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
+import '/enums/enums.dart';
+import '/utils/utils_enum.dart';
+import 'package:photo_manager/photo_manager.dart';
 import '/controllers/controllers.dart';
 import '/widgets/widgets.dart';
 import '/routers/app_routers.dart';
@@ -97,18 +99,18 @@ class HomeScreenController extends GetxController {
     update();
   }
 
-  void onBottomNavigation(int index) {
+  void onBottomNavigation(int index) async {
     EBottomNavigationType type = UtilsEnum.indexToBottomNavigationType(index);
-    sheetController.close();
-    isCameraDispose = true;
-    cameraController!.dispose();
+
     update();
     switch (type) {
       case EBottomNavigationType.gallery:
-        Get.toNamed(AppRoutes.galleryPicker);
+        Get.toNamed(AppRoutes.galleryPicker, arguments: {
+          'file_models': fileModels,
+        });
         break;
       case EBottomNavigationType.files:
-        // TODO: Handle this case.
+        await getFiles();
         break;
       case EBottomNavigationType.location:
         // TODO: Handle this case.
@@ -117,6 +119,17 @@ class HomeScreenController extends GetxController {
         // TODO: Handle this case.
         break;
     }
+    sheetController.close();
+    isCameraDispose = true;
+    cameraController!.dispose();
+  }
+
+  Future<void> getFiles() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'pdf', 'doc'],
+    );
+    print("");
   }
 
   void selectFiles() {

@@ -24,18 +24,18 @@ class GalleryPickerScreen extends GetView<GalleryPickerScreenController> {
             scrollController: controller.scrollController,
             pickFiles: controller.pickFiles,
             onDetail: controller.onDetail,
-            files: controller.files,
+            files: controller.fileModels,
             child: (context, index) {
-              switch (galleryPickerController.files[index].type!) {
+              switch (galleryPickerController.fileModels[index].type!) {
                 case AssetType.image:
                   return _ImagePicker(
-                      fileModel: galleryPickerController.files[index]);
+                      fileModel: galleryPickerController.fileModels[index]);
                 case AssetType.video:
                   return Stack(
                     alignment: Alignment.center,
                     children: [
                       Image.memory(
-                        galleryPickerController.files[index].thumbData!,
+                        galleryPickerController.fileModels[index].thumbData!,
                         width: double.infinity,
                         height: double.infinity,
                         fit: BoxFit.cover,

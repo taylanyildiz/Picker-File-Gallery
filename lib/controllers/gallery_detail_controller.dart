@@ -46,10 +46,10 @@ class GalleryDetailController extends GetxController {
   int selectIndex = 0;
 
   @override
-  void onInit() async {
-    await getArguments();
+  void onInit() {
+    getArguments();
     initializePageControllers();
-    await setNormalScreen();
+    setNormalScreen();
     super.onInit();
   }
 

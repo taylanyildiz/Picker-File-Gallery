@@ -5,17 +5,17 @@ import 'package:photo_manager/photo_manager.dart';
 
 class FileModel {
   FileModel({
-    required this.id,
-    required this.file,
-    required this.path,
-    required this.thumbData,
-    required this.extention,
-    required this.type,
-    required this.duration,
+    this.id,
+    this.file,
+    this.path,
+    this.thumbData,
+    this.extention,
+    this.type,
+    this.duration,
     this.isSelected = false,
     this.size,
   });
-  String id;
+  String? id;
   String? path;
   File? file;
   Uint8List? thumbData;

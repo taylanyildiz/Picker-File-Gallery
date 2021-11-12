@@ -10,13 +10,13 @@ class GalleryPickerScreenController extends GetxController {
   /// Scroll Controller.
   final scrollController = ScrollController();
 
-  List<FileModel> files = [];
+  List<FileModel> fileModels = [];
 
   List<FileModel> selectedFile = [];
 
   @override
-  void onInit() async {
-    await getFiles();
+  void onInit() {
+    fileModels = Get.arguments['file_models'];
     scrollController.addListener(_scrollListener);
     super.onInit();
   }
@@ -37,7 +37,7 @@ class GalleryPickerScreenController extends GetxController {
   }
 
   Future<void> getFiles() async {
-    files = await GalleryPickerController.getFileFromGallery(files);
+    fileModels = await GalleryPickerController.getFileFromGallery(fileModels);
     update();
   }
 
@@ -53,7 +53,7 @@ class GalleryPickerScreenController extends GetxController {
   void onDetail(FileModel fileModel) {
     Get.toNamed(AppRoutes.galleryDetail, arguments: {
       'file_model': fileModel,
-      'file_models': files,
+      'file_models': fileModels,
     });
   }
 }
