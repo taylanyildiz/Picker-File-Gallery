@@ -17,11 +17,6 @@ class AppPages {
         page: () => const GalleryPickerScreen(),
         binding: GalleryPickerScreenBinding()),
     GetPage(
-      name: AppRoutes.sendImage,
-      page: () => const SendImageScreen(),
-      binding: SendImageScreenBinding(),
-    ),
-    GetPage(
       name: AppRoutes.galleryDetail,
       page: () => const GalleryDetailScreen(),
       binding: GalleryDetailBinding(),

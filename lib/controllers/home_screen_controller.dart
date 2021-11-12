@@ -19,7 +19,7 @@ class HomeScreenController extends GetxController {
   CameraController? cameraController;
 
   /// Image files
-  List<FileModel> imageFiles = [];
+  List<FileModel> fileModels = [];
 
   /// Controller of list.
   late ScrollController scrollController;
@@ -71,7 +71,7 @@ class HomeScreenController extends GetxController {
   Future<void> getImageFiles() async {
     final _ps = await PhotoManager.requestPermissionExtend();
     if (_ps.isAuth) {
-      imageFiles = await GalleryPickerController.getImageFiles(imageFiles);
+      fileModels = await GalleryPickerController.getFileFromGallery(fileModels);
       update();
     } else {
       await getImageFiles();
@@ -149,6 +149,7 @@ class HomeScreenController extends GetxController {
   void onDetail(FileModel fileModel) {
     Get.toNamed(AppRoutes.galleryDetail, arguments: {
       'file_model': fileModel,
+      'file_models': fileModels,
     });
   }
 
@@ -177,10 +178,6 @@ class HomeScreenController extends GetxController {
   void openCamera() {
     Get.toNamed(AppRoutes.camera, arguments: {'camera': cameraController});
     // sheetController.close();
-  }
-
-  void openImageFile(File file) async {
-    Get.toNamed(AppRoutes.sendImage, arguments: file);
   }
 
   void getFileFromGallery() {

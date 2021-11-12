@@ -1,12 +1,13 @@
 import 'package:bottom_sheet_picker/utils/utils.dart';
 import 'package:camera/camera.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:photo_manager/photo_manager.dart';
 
 import '/models/file_model.dart';
 import 'package:flutter/material.dart';
 
-class ImagePicker extends StatefulWidget {
-  const ImagePicker({
+class GalleryPickerWithCamera extends StatefulWidget {
+  const GalleryPickerWithCamera({
     Key? key,
     required this.pickerController,
     required this.cameraController,
@@ -36,10 +37,11 @@ class ImagePicker extends StatefulWidget {
   final bool isCameraDispose;
 
   @override
-  State<ImagePicker> createState() => _ImagePickerState();
+  State<GalleryPickerWithCamera> createState() =>
+      _GalleryPickerWithCameraState();
 }
 
-class _ImagePickerState extends State<ImagePicker>
+class _GalleryPickerWithCameraState extends State<GalleryPickerWithCamera>
     with SingleTickerProviderStateMixin {
   late AnimationController controller;
 
@@ -201,16 +203,51 @@ class _ImagePickerState extends State<ImagePicker>
             Icons.image,
             color: Colors.black,
           ),
-          Image.file(
-            widget.files[index].file!,
-            width: double.infinity,
-            height: double.infinity,
-            fit: BoxFit.cover,
-          ),
+          buildFile(index),
           selectedCount != 0 ? buildSelectionBox(index) : const SizedBox(),
         ],
       ),
     );
+  }
+
+  Widget buildFile(index) {
+    switch (widget.files[index].type) {
+      case AssetType.other:
+        return const SizedBox();
+      case AssetType.image:
+        return Image.file(
+          widget.files[index].file!,
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.cover,
+        );
+      case AssetType.video:
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.memory(
+              widget.files[index].thumbData!,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.play_arrow,
+                color: Colors.black,
+              ),
+            )
+          ],
+        );
+      case AssetType.audio:
+        return const SizedBox();
+      default:
+        return const SizedBox();
+    }
   }
 
   Widget buildSelectionBox(index) {

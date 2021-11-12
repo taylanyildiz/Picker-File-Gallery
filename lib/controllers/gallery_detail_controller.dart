@@ -34,10 +34,10 @@ class GalleryDetailController extends GetxController {
   final trimmer = Trimmer();
 
   /// Page controller for gesture files.
-  late PageController pageFileController;
+  PageController? pageFileController;
 
   /// Bottom file list view controller.
-  late PageController pageThumbController;
+  PageController? pageThumbController;
 
   /// Image detail mode.
   EFileDetailMode fileDetailMode = EFileDetailMode.gesture;
@@ -47,7 +47,7 @@ class GalleryDetailController extends GetxController {
 
   @override
   void onInit() async {
-    getArguments();
+    await getArguments();
     initializePageControllers();
     await setNormalScreen();
     super.onInit();
@@ -74,20 +74,11 @@ class GalleryDetailController extends GetxController {
   Future<void> getArguments() async {
     isCamera = Get.arguments['isCamera'] ?? false;
     fileModel = Get.arguments['file_model'];
-    fileModels = [];
-    if (!isCamera) {
-      await getFiles();
-    }
-    if (fileModels.isEmpty) {
-      fileModels = [fileModel];
-    }
+    fileModels = Get.arguments['file_models'] ?? [fileModel];
     selectIndex = fileModels.indexWhere((e) => e.id == fileModel.id);
     selectedFileModel = fileModel;
     if (!isCamera && selectIndex == fileModels.length - 1) {
-      getFiles();
-    }
-    if (selectedFileModel.type == AssetType.video && isCamera) {
-      fileDetailMode = EFileDetailMode.videoEdit;
+      await getFiles();
     }
   }
 
@@ -97,14 +88,17 @@ class GalleryDetailController extends GetxController {
       viewportFraction: .15,
       keepPage: false,
     );
-    pageFileController = PageController(initialPage: selectIndex)
-      ..addListener(_listenPageController);
+    pageFileController = PageController(
+      initialPage: selectIndex,
+      keepPage: false,
+    )..addListener(_listenPageController);
+    update();
   }
 
   void _listenPageController() async {
     if (!isCamera) {
-      if (pageFileController.position.atEdge) {
-        if (pageFileController.position.pixels == 0) {
+      if (pageFileController!.position.atEdge) {
+        if (pageFileController!.position.pixels == 0) {
           // top
           log('start');
         } else {
@@ -150,7 +144,7 @@ class GalleryDetailController extends GetxController {
 
   void onPageChangeFile(int index) {
     changePage(index);
-    pageThumbController.animateToPage(
+    pageThumbController!.animateToPage(
       index,
       duration: const Duration(milliseconds: 400),
       curve: Curves.ease,
@@ -159,7 +153,7 @@ class GalleryDetailController extends GetxController {
 
   void onPageChangeThumb(int index) {
     changePage(index);
-    pageFileController.jumpToPage(index);
+    pageFileController!.jumpToPage(index);
   }
 
   void changePage(int page) {
@@ -169,7 +163,7 @@ class GalleryDetailController extends GetxController {
 
   void selectThumbFile(int index) {
     selectedFileModel = fileModels[index];
-    pageFileController.jumpToPage(index);
+    pageFileController!.jumpToPage(index);
   }
 
   void selectFile() {

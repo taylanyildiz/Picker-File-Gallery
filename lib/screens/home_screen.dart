@@ -81,12 +81,12 @@ class HomeScreen extends GetView<HomeScreenController> {
       decoration: const BoxDecoration(
         color: Color(0xff1e2b34),
       ),
-      child: ImagePicker(
+      child: GalleryPickerWithCamera(
         pickerController: controller.pickerController,
         isCameraDispose: controller.isCameraDispose,
         cameraController: controller.cameraController,
         cameraScale: controller.middleScreenCameraScale,
-        files: controller.imageFiles,
+        files: controller.fileModels,
         scrollController: controller.scrollController,
         physics: controller.gridViewPhysics,
         onNotification: controller.onNotification,
